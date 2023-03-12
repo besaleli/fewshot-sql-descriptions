@@ -74,7 +74,6 @@ class DescriptionGenerator:
         return truncated_generations
     
     def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
-    # def generate_description(self, query: str, examples: Union[pd.DataFrame, pd.Series, None] = None, generation_kwargs: Union[None, dict] = None):
         prompts = [
             self.create_prompt(model_input.query, model_input.examples) for model_input in model_inputs
             ]
