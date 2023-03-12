@@ -1,4 +1,3 @@
-import datasets
 from transformers import (GPT2LMHeadModel, AutoTokenizer)
 
 from libs.collection import TfIdfCollection
