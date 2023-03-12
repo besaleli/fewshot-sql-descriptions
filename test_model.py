@@ -6,12 +6,12 @@ from libs.generation import DescriptionGenerator, ModelInput
 
 dataset = datasets.load_dataset('sede')
 
-collection = RandomCollection(dataset['train'].to_pandas())
-
 model = DescriptionGenerator(
     model=GPT2LMHeadModel.from_pretrained('gpt2'),
     tokenizer=AutoTokenizer.from_pretrained('gpt2')
     )
+
+collection = RandomCollection(dataset['train'].to_pandas())
 
 test_examples = collection.retrieve(dataset['test'].to_pandas().iloc[0], 3)
 
