@@ -48,6 +48,9 @@ generator = DescriptionGenerator(
     tokenizer=AutoTokenizer.from_pretrained(args.model)
     )
 
+print('DEVICE MAP: ')
+print(generator.model.hf_device_map)
+
 generated_descriptions = []
 
 for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
