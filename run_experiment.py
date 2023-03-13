@@ -50,7 +50,7 @@ generator = DescriptionGenerator(
 
 generated_descriptions = []
 
-for input_batch in tqdm(list(batch(eval_inputs, 16))):
+for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
     generations = generator.generate_description(
         input_batch,
         generation_kwargs=dict(
