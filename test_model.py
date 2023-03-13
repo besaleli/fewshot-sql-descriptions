@@ -14,8 +14,13 @@ model = DescriptionGenerator(
 collection = TfIdfCollection(dataset['train'].to_pandas())
 
 model_inputs = [
-    ModelInput(dataset['test'][i]['QueryBody'], collection.retrieve(dataset['test'].to_pandas().iloc[i], 1)) for i in range(5)
-    ]
+    ModelInput(
+        row['QueryBody'],
+        collection.retrieve(row, 1)
+        ) for _, row in list(
+            dataset['test'].to_pandas().iterrows()
+            )[:5]
+]
 
 for inp in model_inputs:
     print(len(inp.examples))
