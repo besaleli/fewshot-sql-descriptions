@@ -1,9 +1,9 @@
 from typing import Union, List
-from dataclasses import dataclass
 import pandas as pd
 import torch
 from transformers import (PreTrainedModel,
                           PreTrainedTokenizer,
+                          GPT2LMHeadModel,
                           StoppingCriteria,
                           StoppingCriteriaList)
 
@@ -28,17 +28,25 @@ class EarlyStop(StoppingCriteria):
         return input_ids[0][-1] in self.stop_ids
 
 
-@dataclass
 class ModelInput:
-    query: str
-    examples: pd.DataFrame
+    def __init__(self, query: str, examples: pd.DataFrame):
+        self.query = query
+        self.examples = examples
+        
+    def to_json(self):
+        return dict(
+            query=self.query,
+            examples=self.examples.to_json(orient='records')
+            )
 
 
 class DescriptionGenerator:
     def __init__(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer):
         self.model = model
+        self.model.eval()
         self.tokenizer = tokenizer
         self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         self.tokenizer.padding_side = 'left'
         
     generation_format = generation_format.strip()
@@ -71,6 +79,8 @@ class DescriptionGenerator:
         for keyword in early_stop.keywords:
             truncated_generations = [i[:-len(keyword)] if i.endswith(keyword) else i for i in truncated_generations]
             
+        truncated_generations = [i.replace('# Query:', '') for i in truncated_generations]
+        
         return truncated_generations
     
     def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
@@ -84,6 +94,12 @@ class DescriptionGenerator:
             padding=True,
             truncation=True
             ).to(self.model.device)
+        
+        if 'max_new_tokens' in generation_kwargs:
+            for inp in tokenized_inputs.input_ids:
+                if len(inp) + generation_kwargs['max_new_tokens'] > self.tokenizer.model_max_length:
+                    print('Warning: max_new_tokens is too large for the model')
+                    generation_kwargs['max_new_tokens'] = self.tokenizer.model_max_length - len(inp)
         
         generation_kwargs = generation_kwargs or dict()
         
@@ -99,7 +115,10 @@ class DescriptionGenerator:
             echo = False
         
         with torch.no_grad():
-            output = self.model.generate(**tokenized_inputs, **generation_kwargs)
+            if type(self.model) == GPT2LMHeadModel:
+                output = self.model.generate(**tokenized_inputs, **generation_kwargs)
+            else:
+                output = self.model.generate(tokenized_inputs.input_ids, **generation_kwargs)
         
         if not echo:
             output = self.remove_prompt_from_generation(output, tokenized_inputs)
