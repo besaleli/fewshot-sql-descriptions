@@ -14,6 +14,7 @@ from libs import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='gpt2', help='Autoregressive model to use for generation')
+parser.add_argument('--eightbit', action='store_true', help='Use 8-bit quantization for generation')
 parser.add_argument('--collection', type=str, default='random', help='Collection method to use for fewshot example retrieval')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch size for generation')
 parser.add_argument('--sample', '-s', type=int, default=None, help='Number of examples to sample from test set (default: None, use all examples)')
@@ -39,11 +40,16 @@ eval_inputs = load_training_inputs(
     n=args.nshot)
 
 # load description generator
+model_kwargs = dict(
+    torch_dtype='auto',
+    device_map='auto',
+    load_in_8bit=args.eightbit
+    )
+
 generator = DescriptionGenerator(
     model=AutoModelForCausalLM.from_pretrained(
         args.model,
-        torch_dtype='auto',
-        device_map='auto'
+        **model_kwargs
         ),
     tokenizer=AutoTokenizer.from_pretrained(args.model)
     )
