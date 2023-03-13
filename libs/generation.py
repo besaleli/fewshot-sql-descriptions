@@ -80,7 +80,13 @@ class DescriptionGenerator:
         truncated_generations = generations 
         
         truncated_generations = [
-            gen[:min(gen.index(i) for i in [s for s in stop if s in gen] or len(gen))] for gen in generations
+            gen[
+                :min(
+                    [
+                        gen.index(i) for i in (s for s in stop if s in gen)
+                        ] or [len(gen)]
+                    )
+                ] for gen in generations
         ]
         
         return truncated_generations
