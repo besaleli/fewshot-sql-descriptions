@@ -31,7 +31,7 @@ gen = model.generate_description(
         max_new_tokens=64,
         do_sample=True,
         top_p=0.95,
-        stop=['#'])
+        stop=['#', '\n\n'])
     )
 
 print(gen)
