@@ -36,7 +36,7 @@ collection: Collection = get_collection_method(args.collection)(sede['train'].to
 eval_inputs = load_training_inputs(
     dataset=df,
     collection=collection,
-    n=3)
+    n=args.nshot)
 
 # load description generator
 generator = DescriptionGenerator(
