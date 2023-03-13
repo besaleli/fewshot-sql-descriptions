@@ -27,7 +27,7 @@ class TfIdfCollection(Collection):
         self.tfidf_model = self.get_tfidf_model()
         
         print('getting vectors...')
-        self.dataset['tfidf'] = self.get_collection_tfidf_vectors()
+        self.tfidf_vectors = self.get_collection_tfidf_vectors()
         
     def get_tfidf_model(self) -> TfidfVectorizer:
         tfidf_model = TfidfVectorizer(
@@ -49,12 +49,14 @@ class TfIdfCollection(Collection):
         query_tfidf = self.fit_query(query['QueryBody'])
         
         similarities = torch.tensor(
-            [1 - cosine(query_tfidf, i.toarray().squeeze()) for i in self.dataset['tfidf']]
+            [1 - cosine(query_tfidf, i.toarray().squeeze()) for i in self.tfidf_vectors]
             )
         
         candidates = torch.topk(similarities, n)
+        cand_similarities, cand_idx = candidates.values, candidates.indices
         
-        cand_df = self.dataset.iloc[candidates.indices].reset_index(drop=True)
-        cand_df['similarity'] = candidates.values
+        cand_df = self.dataset.iloc[cand_idx].reset_index(drop=True)
+        cand_df['similarity'] = cand_similarities
+        assert len(cand_df) == n, 'Number of candidates is not equal to n'
         
         return cand_df

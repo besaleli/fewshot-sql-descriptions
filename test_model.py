@@ -17,6 +17,9 @@ model_inputs = [
     ModelInput(dataset['test'][i]['QueryBody'], collection.retrieve(dataset['test'].to_pandas().iloc[i], 1)) for i in range(5)
     ]
 
+for inp in model_inputs:
+    print(len(inp.examples))
+
 gen = model.generate_description(
     model_inputs,
     generation_kwargs=dict(
