@@ -66,7 +66,7 @@ for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
             max_new_tokens=64,
             do_sample=True,
             top_p=0.95,
-            stop=['#'])
+            stop=['#', '\n\n'])
         )
 
     generated_descriptions.extend(generations)
