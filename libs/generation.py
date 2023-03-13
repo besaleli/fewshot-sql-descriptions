@@ -46,9 +46,11 @@ class DescriptionGenerator:
         self.model = model
         self.model.eval()
         self.tokenizer = tokenizer
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
-        self.tokenizer.padding_side = 'left'
+        if type(self.model) not in [T5ForConditionalGeneration]:
+            print('Warning: model is not T5ForConditionalGeneration, setting tokenizer policy to left padding')
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            self.tokenizer.padding_side = 'left'
         
     generation_format = generation_format.strip()
         
