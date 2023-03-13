@@ -73,16 +73,15 @@ class DescriptionGenerator:
     def remove_prompt_from_generation(self, output: torch.LongTensor, tokenized_prompt: dict):
         return [i[len(j):] for i, j in zip(output, tokenized_prompt['input_ids'])]
     
-    def postproc_early_stop(self, generations: List[str], early_stop: Union[EarlyStop, None] = None):
-        if early_stop is None:
+    def postproc_early_stop(self, generations: List[str], stop: Union[list, None] = None):
+        if stop is None:
             return generations
         
         truncated_generations = generations 
         
-        for keyword in early_stop.keywords:
-            truncated_generations = [i[:-len(keyword)] if i.endswith(keyword) else i for i in truncated_generations]
-            
-        truncated_generations = [i.replace('# Query:', '') for i in truncated_generations]
+        truncated_generations = [
+            gen[:min(gen.index(i) for i in stop)] for gen in generations
+        ]
         
         return truncated_generations
     
@@ -107,10 +106,9 @@ class DescriptionGenerator:
         generation_kwargs = generation_kwargs or dict()
         
         if 'stop' in generation_kwargs:
-            early_stop = EarlyStop(generation_kwargs.pop('stop'), self.tokenizer)
-            generation_kwargs['stopping_criteria'] = StoppingCriteriaList([early_stop])
+            stop = generation_kwargs.pop('stop')
         else:
-            early_stop = None
+            stop = None
         
         if 'echo' in generation_kwargs:
             echo = generation_kwargs.pop('echo')
@@ -128,6 +126,6 @@ class DescriptionGenerator:
         
         decoded_generation = [self.tokenizer.decode(i) for i in output]
         
-        decoded_generation = self.postproc_early_stop(decoded_generation, early_stop=early_stop)
+        decoded_generation = self.postproc_early_stop(decoded_generation, stop=stop)
         
         return decoded_generation
