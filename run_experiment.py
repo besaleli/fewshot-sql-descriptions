@@ -1,6 +1,6 @@
 import argparse
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 from tqdm.auto import tqdm
 
 from libs import (
@@ -14,6 +14,7 @@ from libs import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='gpt2', help='Autoregressive model to use for generation')
+parser.add_argument('--seq2seq', action='store_true', help='Use seq2seq model for generation')
 parser.add_argument('--eightbit', action='store_true', help='Use 8-bit quantization for generation')
 parser.add_argument('--collection', type=str, default='random', help='Collection method to use for fewshot example retrieval')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch size for generation')
@@ -46,8 +47,10 @@ model_kwargs = dict(
     load_in_8bit=args.eightbit
     )
 
+model_architecture = AutoModelForSeq2SeqLM if args.seq2seq else AutoModelForCausalLM
+
 generator = DescriptionGenerator(
-    model=AutoModelForCausalLM.from_pretrained(
+    model=model_architecture.from_pretrained(
         args.model,
         **model_kwargs
         ),
