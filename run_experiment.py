@@ -1,7 +1,9 @@
 import argparse
+import os
 
 from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 from tqdm.auto import tqdm
+import openai
 
 from libs import (
     get_sede,
@@ -9,7 +11,8 @@ from libs import (
     load_training_inputs,
     batch,
     Collection,
-    DescriptionGenerator
+    HFDescriptionGenerator,
+    OpenAIDescriptionGenerator
     )
 
 parser = argparse.ArgumentParser()
@@ -47,18 +50,23 @@ model_kwargs = dict(
     load_in_8bit=args.eightbit
     )
 
-model_architecture = AutoModelForSeq2SeqLM if args.seq2seq else AutoModelForCausalLM
+if args.model == 'text-davinci-003':
+    assert os.path.isdir('.openai_api_key'), 'Please make sure API key is in .openai_api_key'
+    openai.api_key = open('.openai_api_key', 'r').read().strip()
+    generator = OpenAIDescriptionGenerator('text-davinci-003')
+else:
+    model_architecture = AutoModelForSeq2SeqLM if args.seq2seq else AutoModelForCausalLM
 
-generator = DescriptionGenerator(
-    model=model_architecture.from_pretrained(
-        args.model,
-        **model_kwargs
-        ),
-    tokenizer=AutoTokenizer.from_pretrained(args.model)
-    )
+    generator = HFDescriptionGenerator(
+        model=model_architecture.from_pretrained(
+            args.model,
+            **model_kwargs
+            ),
+        tokenizer=AutoTokenizer.from_pretrained(args.model)
+        )
 
-print('DEVICE MAP: ')
-print(generator.model.hf_device_map)
+    print('DEVICE MAP: ')
+    print(generator.model.hf_device_map)
 
 generated_descriptions = []
 
@@ -67,8 +75,6 @@ for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
         input_batch,
         generation_kwargs=dict(
             max_new_tokens=64,
-            do_sample=True,
-            top_p=0.95,
             stop=['#', '\n\n'])
         )
 

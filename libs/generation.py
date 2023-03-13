@@ -1,6 +1,7 @@
 from typing import Union, List
 import pandas as pd
 import torch
+import openai
 from transformers import (PreTrainedModel,
                           PreTrainedTokenizer,
                           GPT2LMHeadModel,
@@ -40,18 +41,10 @@ class ModelInput:
             examples=self.examples.to_json(orient='records')
             )
 
-
 class DescriptionGenerator:
-    def __init__(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer):
-        self.model = model
-        self.model.eval()
-        self.tokenizer = tokenizer
-        if type(self.model) not in [T5ForConditionalGeneration]:
-            print('Warning: model is not T5ForConditionalGeneration, setting tokenizer policy to left padding')
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
-            self.tokenizer.padding_side = 'left'
-        
+    def __init__(self):
+        pass
+    
     generation_format = generation_format.strip()
         
     def format_example(self, row: pd.Series) -> str:
@@ -69,6 +62,22 @@ class DescriptionGenerator:
         formatted_examples = examples.apply(self.format_example, axis=1).to_list()
         
         return '\n\n'.join(formatted_examples + [formatted_query])
+    
+    def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
+        raise NotImplementedError('generate_description not implemented')
+
+class HFDescriptionGenerator(DescriptionGenerator):
+    def __init__(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer):
+        super().__init__()
+        
+        self.model = model
+        self.model.eval()
+        self.tokenizer = tokenizer
+        if type(self.model) not in [T5ForConditionalGeneration]:
+            print('Warning: model is not T5ForConditionalGeneration, setting tokenizer policy to left padding')
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            self.tokenizer.padding_side = 'left'
     
     def remove_prompt_from_generation(self, output: torch.LongTensor, tokenized_prompt: dict):
         return [i[len(j):] for i, j in zip(output, tokenized_prompt['input_ids'])]
@@ -135,3 +144,26 @@ class DescriptionGenerator:
         decoded_generation = self.postproc_early_stop(decoded_generation, stop=stop)
         
         return decoded_generation
+
+class OpenAIDescriptionGenerator(DescriptionGenerator):
+    def __init__(self, engine: str):
+        super().__init__()
+        self.engine = engine
+    
+    def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
+        prompts = [
+            self.create_prompt(model_input.query, model_input.examples) for model_input in model_inputs
+            ]
+        
+        if 'do_sample' in generation_kwargs:
+            generation_kwargs.pop('do_sample')
+            
+        if 'max_new_tokens' in generation_kwargs:
+            generation_kwargs['max_tokens'] = generation_kwargs.pop('max_new_tokens')
+        
+        completion = openai.Completion.create(
+            engine=self.engine,
+            prompt=prompts,
+            **generation_kwargs)
+        
+        return [i['text'] for i in completion['choices']]
