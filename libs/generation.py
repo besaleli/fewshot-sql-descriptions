@@ -4,6 +4,7 @@ import torch
 from transformers import (PreTrainedModel,
                           PreTrainedTokenizer,
                           GPT2LMHeadModel,
+                          T5ForConditionalGeneration,
                           StoppingCriteria,
                           StoppingCriteriaList)
 
@@ -14,7 +15,7 @@ generation_format = """
 {}
 ```
 
-# Title:
+# Describe the query above in a short sentence:
 {}
 """
 
@@ -115,7 +116,7 @@ class DescriptionGenerator:
             echo = False
         
         with torch.no_grad():
-            if type(self.model) == GPT2LMHeadModel:
+            if type(self.model) in [GPT2LMHeadModel, T5ForConditionalGeneration]:
                 output = self.model.generate(**tokenized_inputs, **generation_kwargs)
             else:
                 output = self.model.generate(tokenized_inputs.input_ids, **generation_kwargs)
