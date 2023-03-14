@@ -25,6 +25,7 @@ parser.add_argument('--batch_size', type=int, default=16, help='Batch size for g
 parser.add_argument('--sample', '-s', type=int, default=None, help='Number of examples to sample from test set (default: None, use all examples)')
 parser.add_argument('--random_state', type=int, default=42, help='Random state for sampling examples from test set (default: 42)')
 parser.add_argument('--nshot', '-n', type=int, default=3, help='Number of examples to use for fewshot generation')
+parser.add_argument('--mask_columns', type=int, default=0, help='Number of columns to mask in query (default: 0, do not mask any columns)')
 parser.add_argument('--output_file', '-o', type=str, required=True, help='Output file to save generated descriptions to')
 
 args = parser.parse_args()
@@ -45,7 +46,9 @@ collection: Collection = get_collection_method(args.collection)(sede['train'].to
 eval_inputs = load_training_inputs(
     dataset=df,
     collection=collection,
-    n=args.nshot)
+    n=args.nshot,
+    mask_columns=args.mask_columns
+    )
 
 # load description generator
 model_kwargs = dict(

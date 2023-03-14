@@ -18,7 +18,7 @@ def get_sede():
         
     return ds
 
-def load_training_inputs(dataset: pd.DataFrame, collection: Collection, n: int):
+def load_training_inputs(dataset: pd.DataFrame, collection: Collection, n: int, mask_columns: int = 0):
     return [
-        ModelInput(row['QueryBody'], collection.retrieve(row, n)) for _, row in dataset.iterrows()
+        ModelInput(row['QueryBody'], collection.retrieve(row, n)).mask_columns(mask_columns) for _, row in dataset.iterrows()
     ]
