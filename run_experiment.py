@@ -1,5 +1,4 @@
 import argparse
-import os
 
 from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 from tqdm.auto import tqdm
