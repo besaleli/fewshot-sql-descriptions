@@ -24,7 +24,7 @@ parser.add_argument('--batch_size', type=int, default=16, help='Batch size for g
 parser.add_argument('--sample', '-s', type=int, default=None, help='Number of examples to sample from test set (default: None, use all examples)')
 parser.add_argument('--nshot', '-n', type=int, default=3, help='Number of examples to use for fewshot generation')
 parser.add_argument('--output_file', '-o', type=str, required=True, help='Output file to save generated descriptions to')
-                    
+
 args = parser.parse_args()
 
 # load dataset
