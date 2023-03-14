@@ -1,9 +1,21 @@
 from typing import Callable
 import time
+import sqlglot
+import sql_metadata
 
 def batch(l: list, n: int) -> list:
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
+"""     
+def get_columns(query: str) -> list:
+    parsed_tree = sqlglot.parse_one(query, read='tsql')
+    columns = parsed_tree.find_all(sqlglot.exp.Column)
+    return [i.sql() for i in columns]
+"""
+
+def get_columns(query: str) -> list:
+    return [i.split('.')[-1].replace('#', '').lower() for i in sql_metadata.Parser(query).columns]
 
 def accommodate_openai(max_tries: int = 5, time_sleep: int = 10) -> Callable:
     """Acommodates for OpenAI API rate limits.

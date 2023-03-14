@@ -1,13 +1,17 @@
 import datasets
 import pandas as pd
 from sql_metadata import Parser
+# import sqlglot
 
 from libs.collection import Collection
 from libs.generation import ModelInput
 
 def can_parse(query):
     try:
-        Parser(query).tokens
+        # parsed_query = sqlglot.parse_one(query, read='tsql')
+        toks = Parser(query).tokens
+        cols = Parser(query).columns
+        tables = Parser(query).tables
         return True
     except:
         return False

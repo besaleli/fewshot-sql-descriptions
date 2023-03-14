@@ -9,5 +9,7 @@ def get_collection_method(name: str) -> Collection:
         return RandomCollection
     if name == 'tfidf':
         return TfIdfCollection
+    if name == 'column_jaccard':
+        return ColumnJaccardIndexCollection
     
     raise ValueError(f'Collection method {name} is not implemented')

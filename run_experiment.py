@@ -60,7 +60,7 @@ model_kwargs = dict(
 if os.path.exists('.openai_api_key'):
     openai.api_key = open('.openai_api_key', 'r').read().strip()
 
-if args.model in ['text-davinci-003', 'text-curie-001']:
+if args.model in ['text-davinci-003', 'text-curie-001', 'text-babbage-001']:
     generator = OpenAIDescriptionGenerator(args.model)
 elif args.model == 'chatgpt':
     generator = ChatGPTDescriptionGenerator('gpt-3.5-turbo')
@@ -90,6 +90,6 @@ for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
 
     generated_descriptions.extend(generations)
 
-df['examples'] = [i.examples.to_json() for i in eval_inputs]
+df['model_input'] = [i.to_json() for i in eval_inputs]
 df['generation'] = generated_descriptions
 df.to_json(args.output_file, orient='records')

@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.spatial.distance import cosine
 from sql_metadata import Parser
 
+from libs.utils import get_columns
+
 class Collection:
     def __init__(self, dataset: pd.DataFrame):
         self.dataset = dataset.reset_index(drop=True)
@@ -20,6 +22,31 @@ class RandomCollection(Collection):
     def retrieve(self, query: pd.Series, n: int):
         random_state = int(os.getenv('PD_RANDOM_STATE', 42))
         return self.dataset.sample(n=n, random_state=random_state).reset_index(drop=True)
+    
+class ColumnJaccardIndexCollection(Collection):
+    def __init__(self, dataset: pd.DataFrame):
+        super().__init__(dataset)
+        
+        self.columns = self.dataset['QueryBody'].map(get_columns)
+        
+    def retrieve(self, query: pd.Series, n: int) -> pd.DataFrame:
+        parsed_cols = set(get_columns(query['QueryBody']))
+        jaccard_indices = torch.tensor(
+            self.columns.map(
+                lambda i: len(set(i).intersection(parsed_cols)) / len(set(i).union(parsed_cols))
+                ).to_list()
+            )
+        
+        candidates = torch.topk(jaccard_indices, n)
+        cand_similarities, cand_idx = candidates.values, candidates.indices
+        
+        cand_df = self.dataset.iloc[cand_idx].reset_index(drop=True)
+        cand_df['similarity'] = cand_similarities
+        assert len(cand_df) == n, 'Number of candidates is not equal to n'
+        
+        return cand_df
+        
+        
     
 class TfIdfCollection(Collection):
     def __init__(self, dataset: pd.DataFrame):
