@@ -78,7 +78,7 @@ for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
         )
 
     generated_descriptions.extend(generations)
-    
+
 df['examples'] = [i.examples.to_json() for i in eval_inputs]
 df['generation'] = generated_descriptions
 df.to_json(args.output_file, orient='records')
