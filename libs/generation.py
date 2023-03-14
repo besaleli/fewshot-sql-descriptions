@@ -10,6 +10,7 @@ from transformers import (PreTrainedModel,
                           StoppingCriteriaList)
 
 from libs.utils import accommodate_openai
+from libs.inputs import ModelInput
 
 
 generation_format = """
@@ -30,18 +31,6 @@ class EarlyStop(StoppingCriteria):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
         return input_ids[0][-1] in self.stop_ids
-
-
-class ModelInput:
-    def __init__(self, query: str, examples: pd.DataFrame):
-        self.query = query
-        self.examples = examples
-        
-    def to_json(self):
-        return dict(
-            query=self.query,
-            examples=self.examples.to_json(orient='records')
-            )
 
 class DescriptionGenerator:
     def __init__(self):
