@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from sql_metadata import Parser
 
-random.seed = os.getenv('PD_RANDOM_STATE', 42)
+random.seed(os.getenv('PD_RANDOM_STATE', 42))
 
 class ModelInput:
     def __init__(self, query: str, examples: pd.DataFrame):
