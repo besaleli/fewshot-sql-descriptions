@@ -1,8 +1,8 @@
-#!/usr/bin/env -S v
+import os
 
 fn sh(cmd string) {
 	println('RUNNING CMD $cmd')
-	print(execute_or_exit(cmd).output)
+	print(os.execute_or_exit(cmd).output)
 }
 
 collection_types := ['random', 'tfidf']
