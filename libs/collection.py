@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import torch
@@ -17,7 +18,8 @@ class RandomCollection(Collection):
         super().__init__(dataset)
         
     def retrieve(self, query: pd.Series, n: int):
-        return self.dataset.sample(n=n).reset_index(drop=True)
+        random_state = int(os.getenv('PD_RANDOM_STATE', 42))
+        return self.dataset.sample(n=n, random_state=random_state).reset_index(drop=True)
     
 class TfIdfCollection(Collection):
     def __init__(self, dataset: pd.DataFrame):
