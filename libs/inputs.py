@@ -7,6 +7,8 @@ class ModelInput:
         self.query = query
         self.examples = examples
         
+        self.examples['col_mask_map'] = [{} for _ in range(len(self.examples))]
+        
     def to_json(self):
         return dict(
             query=self.query,
