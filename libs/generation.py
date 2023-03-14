@@ -9,6 +9,8 @@ from transformers import (PreTrainedModel,
                           StoppingCriteria,
                           StoppingCriteriaList)
 
+from libs.utils import accommodate_openai
+
 
 generation_format = """
 # Query:
@@ -150,6 +152,7 @@ class OpenAIDescriptionGenerator(DescriptionGenerator):
         super().__init__()
         self.engine = engine
     
+    @accommodate_openai(max_tries=3, time_sleep=5)
     def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
         prompts = [
             self.create_prompt(model_input.query, model_input.examples) for model_input in model_inputs

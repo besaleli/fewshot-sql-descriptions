@@ -51,7 +51,6 @@ model_kwargs = dict(
     )
 
 if args.model == 'text-davinci-003':
-    assert os.path.isdir('.openai_api_key'), 'Please make sure API key is in .openai_api_key'
     openai.api_key = open('.openai_api_key', 'r').read().strip()
     generator = OpenAIDescriptionGenerator('text-davinci-003')
 else:

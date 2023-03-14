@@ -1,6 +1,6 @@
 python3 run_experiment.py \
-    --model gpt2 \
+    --model text-davinci-003 \
     --collection tfidf \
     --sample 50 \
-    --nshot 1 \
+    --nshot 3 \
     -o test.json
