@@ -6,7 +6,7 @@ fn sh(cmd string) {
 }
 
 collection_types := ['random', 'tfidf']
-model_name := 'text-davinci-003'
+model_name := 'text-curie-001'
 
 for collection_type in collection_types {
 	for nshot in 0 .. 4 {

@@ -12,7 +12,8 @@ from libs import (
     batch,
     Collection,
     HFDescriptionGenerator,
-    OpenAIDescriptionGenerator
+    OpenAIDescriptionGenerator,
+    ChatGPTDescriptionGenerator
     )
 
 parser = argparse.ArgumentParser()
@@ -53,9 +54,13 @@ model_kwargs = dict(
     load_in_8bit=args.eightbit
     )
 
-if args.model == 'text-davinci-003':
+if os.path.exists('.openai_api_key'):
     openai.api_key = open('.openai_api_key', 'r').read().strip()
-    generator = OpenAIDescriptionGenerator('text-davinci-003')
+
+if args.model in ['text-davinci-003', 'text-curie-001']:
+    generator = OpenAIDescriptionGenerator(args.model)
+elif args.model == 'chatgpt':
+    generator = ChatGPTDescriptionGenerator('gpt-3.5-turbo')
 else:
     model_architecture = AutoModelForSeq2SeqLM if args.seq2seq else AutoModelForCausalLM
 

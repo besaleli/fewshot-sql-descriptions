@@ -151,6 +151,17 @@ class OpenAIDescriptionGenerator(DescriptionGenerator):
     def __init__(self, engine: str):
         super().__init__()
         self.engine = engine
+        
+    def convert_model_kwargs(self, model_kwargs: dict) -> dict:
+        converted_kwargs = model_kwargs
+        
+        if 'do_sample' in converted_kwargs:
+            converted_kwargs.pop('do_sample')
+            
+        if 'max_new_tokens' in model_kwargs:
+            converted_kwargs['max_tokens'] = converted_kwargs.pop('max_new_tokens')
+        
+        return converted_kwargs
     
     @accommodate_openai(max_tries=3, time_sleep=5)
     def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
@@ -158,15 +169,53 @@ class OpenAIDescriptionGenerator(DescriptionGenerator):
             self.create_prompt(model_input.query, model_input.examples) for model_input in model_inputs
             ]
         
-        if 'do_sample' in generation_kwargs:
-            generation_kwargs.pop('do_sample')
-            
-        if 'max_new_tokens' in generation_kwargs:
-            generation_kwargs['max_tokens'] = generation_kwargs.pop('max_new_tokens')
+        gen_kwargs = self.convert_model_kwargs(generation_kwargs or dict())
         
         completion = openai.Completion.create(
             engine=self.engine,
             prompt=prompts,
-            **generation_kwargs)
+            **gen_kwargs)
         
         return [i['text'] for i in completion['choices']]
+
+class ChatGPTDescriptionGenerator(OpenAIDescriptionGenerator):
+    def __init__(self, engine: str):
+        super().__init__(engine)
+        
+    system_desc = 'You are an expert data analyst whose job is to describe SQL queries using natural language.'
+
+    def create_prompt(self, query: str, examples: Union[pd.DataFrame, None] = None):
+        messages = []
+        
+        # append system description
+        messages.append({'role': 'system', 'content': self.system_desc})
+        
+        if not examples.empty:
+            for _, example in examples.iterrows():
+                messages.append({'role': 'user', 'content': self.generation_format.format(example['QueryBody'], '').strip()})
+                messages.append({'role': 'assistant', 'content': example['Title']})
+                
+        messages.append({'role': 'user', 'content': self.generation_format.format(query, '').strip()})
+        
+        return messages
+        
+    @accommodate_openai(max_tries=3, time_sleep=5)
+    def generate_description(self, model_inputs: List[ModelInput], generation_kwargs: Union[None, dict] = None):
+        prompts = [
+            self.create_prompt(model_input.query, model_input.examples) for model_input in model_inputs
+            ]
+        
+        gen_kwargs = self.convert_model_kwargs(generation_kwargs or dict())
+        
+        completions = []
+        
+        for prompt in prompts:
+            completion = openai.ChatCompletion.create(
+                model=self.engine,
+                messages=prompt,
+                **gen_kwargs
+                )
+            
+            completions.append(completion['choices'][0]['message'])
+            
+        return completions
