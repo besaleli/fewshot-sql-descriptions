@@ -2,11 +2,13 @@ import os
 import pandas as pd
 import numpy as np
 import torch
+import sqlglot
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.spatial.distance import cosine
-from sql_metadata import Parser
 
 from libs.utils import get_columns
+
+tokenizer = sqlglot.Tokenizer()
 
 class Collection:
     def __init__(self, dataset: pd.DataFrame):
@@ -27,10 +29,10 @@ class ColumnJaccardIndexCollection(Collection):
     def __init__(self, dataset: pd.DataFrame):
         super().__init__(dataset)
         
-        self.columns = self.dataset['QueryBody'].map(get_columns)
+        self.columns = self.dataset['query'].map(get_columns)
         
     def retrieve(self, query: pd.Series, n: int) -> pd.DataFrame:
-        parsed_cols = set(get_columns(query['QueryBody']))
+        parsed_cols = set(get_columns(query['query']))
         jaccard_indices = torch.tensor(
             self.columns.map(
                 lambda i: len(set(i).intersection(parsed_cols)) / len(set(i).union(parsed_cols))
@@ -60,22 +62,22 @@ class TfIdfCollection(Collection):
         
     def get_tfidf_model(self) -> TfidfVectorizer:
         tfidf_model = TfidfVectorizer(
-            tokenizer=lambda x: [str(i) for i in Parser(x).tokens],
+            tokenizer=lambda x: [str(i) for i in tokenizer.tokenize(x)],
             lowercase=True
-            ).fit(self.dataset['QueryBody'].to_list())
+            ).fit(self.dataset['query'].to_list())
         
         return tfidf_model
     
     def get_collection_tfidf_vectors(self) -> list:
         return [
-            i for i in self.tfidf_model.transform(self.dataset['QueryBody'])
+            i for i in self.tfidf_model.transform(self.dataset['query'])
             ]
         
     def fit_query(self, query: str) -> np.ndarray:
         return self.tfidf_model.transform([query]).toarray().squeeze()
     
     def retrieve(self, query: pd.Series, n: int) -> pd.DataFrame:
-        query_tfidf = self.fit_query(query['QueryBody'])
+        query_tfidf = self.fit_query(query['query'])
         
         similarities = torch.tensor(
             [1 - cosine(query_tfidf, i.toarray().squeeze()) for i in self.tfidf_vectors]

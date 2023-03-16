@@ -1,12 +1,13 @@
 import argparse
 import os
+import json
 
 from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 from tqdm.auto import tqdm
 import openai
+import pandas as pd
 
 from libs import (
-    get_sede,
     get_collection_method,
     load_training_inputs,
     batch,
@@ -33,14 +34,18 @@ args = parser.parse_args()
 os.environ['PD_RANDOM_STATE'] = str(args.random_state)
 
 # load dataset
-sede = get_sede()
-df = sede['test'].to_pandas().reset_index(drop=True)
+train = pd.read_json('EHRSQL/dataset/ehrsql/eicu/train.json')
+train = train[train['is_impossible'] == False]
+train = train.sample(frac=0.1, random_state=args.random_state).reset_index(drop=True)
+
+df = pd.read_json('EHRSQL/dataset/ehrsql/eicu/valid.json')
+df = df[df['is_impossible'] == False]
 
 if args.sample:
     df = df.sample(n=args.sample, random_state=args.random_state).reset_index(drop=True)
 
 # instantiate collection
-collection: Collection = get_collection_method(args.collection)(sede['train'].to_pandas())
+collection: Collection = get_collection_method(args.collection)(train)
 
 # load eval inputs
 eval_inputs = load_training_inputs(
@@ -90,6 +95,6 @@ for input_batch in tqdm(list(batch(eval_inputs, args.batch_size))):
 
     generated_descriptions.extend(generations)
 
-df['model_input'] = [i.to_json() for i in eval_inputs]
+df['model_input'] = [i.to_dict() for i in eval_inputs]
 df['generation'] = generated_descriptions
 df.to_json(args.output_file, orient='records')

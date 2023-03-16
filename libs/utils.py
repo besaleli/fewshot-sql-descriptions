@@ -1,21 +1,25 @@
-from typing import Callable
+from typing import Callable, Union
+import random
+
 import time
 import sqlglot
-import sql_metadata
+
 
 def batch(l: list, n: int) -> list:
     for i in range(0, len(l), n):
         yield l[i:i + n]
-
-"""     
+        
+def sample_from_dict(d: dict, sample: Union[None, int]):
+    if sample in [0, None]:
+        return d
+    
+    keys = random.sample(list(d), sample if sample < len(d) else len(d))
+    return dict(zip(keys, [d[k] for k in keys]))
+  
 def get_columns(query: str) -> list:
-    parsed_tree = sqlglot.parse_one(query, read='tsql')
+    parsed_tree = sqlglot.parse_one(query, read='sqlite')
     columns = parsed_tree.find_all(sqlglot.exp.Column)
-    return [i.sql() for i in columns]
-"""
-
-def get_columns(query: str) -> list:
-    return [i.split('.')[-1].replace('#', '').lower() for i in sql_metadata.Parser(query).columns]
+    return [i.alias_or_name for i in columns]
 
 def accommodate_openai(max_tries: int = 5, time_sleep: int = 10) -> Callable:
     """Acommodates for OpenAI API rate limits.

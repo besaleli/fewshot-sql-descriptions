@@ -40,8 +40,8 @@ class DescriptionGenerator:
         
     def format_example(self, row: pd.Series) -> str:
         return self.generation_format.format(
-            row['QueryBody'],
-            row['Title']
+            row['query'],
+            row['question']
             )
         
     def create_prompt(self, query: str, examples: Union[pd.DataFrame, None] = None):
@@ -181,8 +181,8 @@ class ChatGPTDescriptionGenerator(OpenAIDescriptionGenerator):
         
         if not examples.empty:
             for _, example in examples.iterrows():
-                messages.append({'role': 'user', 'content': self.generation_format.format(example['QueryBody'], '').strip()})
-                messages.append({'role': 'assistant', 'content': example['Title']})
+                messages.append({'role': 'user', 'content': self.generation_format.format(example['query'], '').strip()})
+                messages.append({'role': 'assistant', 'content': example['question']})
                 
         messages.append({'role': 'user', 'content': self.generation_format.format(query, '').strip()})
         

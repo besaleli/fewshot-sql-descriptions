@@ -5,7 +5,12 @@ fn sh(cmd string) {
 	print(os.execute_or_exit(cmd).output)
 }
 
-collection_types := ['random', 'column_jaccard', 'tfidf']
+collection_types := [
+	'random',
+	'column_jaccard',
+	'tfidf'
+	]
+
 model_name := 'text-curie-001'
 
 for collection_type in collection_types {
