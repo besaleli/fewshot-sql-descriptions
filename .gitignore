@@ -3,6 +3,7 @@
 
 # Results
 results/
+results_old/
 data.json
 
 # Byte-compiled / optimized / DLL files
