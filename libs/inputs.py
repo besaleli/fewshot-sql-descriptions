@@ -28,6 +28,18 @@ def _mask_columns(query: str, sample: Union[int, None] = None, maps: Union[dict,
         return e
     
     return parsed_query.transform(transformer).sql(), col_to_anon_maps
+
+def _mask_literals(query: str):
+    def transformer(e):
+        if isinstance(e, sqlglot.exp.Literal):
+            if e.is_number:
+                return sqlglot.parse_one('0')
+
+            return sqlglot.parse_one("'VAL'")
+        
+        return e
+    
+    return sqlglot.parse_one(query).transform(transformer).sql()
     
 def _mask_tables(query: str, sample: Union[int, None] = None, maps: Union[dict, None] = None):
     parsed_query = sqlglot.parse_one(query, read='sqlite')
@@ -39,7 +51,7 @@ def _mask_tables(query: str, sample: Union[int, None] = None, maps: Union[dict, 
             {table.name: f'TABLE{i}' for i, table in enumerate(tables)},
             sample
             )
-    
+
     def transformer(e):
         if isinstance(e, sqlglot.exp.Table):
             if e.name in table_to_anon_maps:
@@ -74,5 +86,10 @@ class ModelInput:
         
         self.examples['query'] = masked_queries
         self.col_mask_map = col_mask_map
+        
+        return self
+    
+    def mask_literals(self):
+        self.query = _mask_literals(self.query)
         
         return self

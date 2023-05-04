@@ -14,25 +14,36 @@ collection_types := [
 model_name := 'text-curie-001'
 
 for collection_type in collection_types {
-	for nshot in 0 .. 4 {
-		for mask in [0, 1, 2, 1000] {
-			output_file := 'results/${model_name}-${collection_type}-${nshot}shot-${mask}mask.json'
+	for nshot in 0 .. 4 { 
+		for mask_literals in [true, false] {
+			for mask in [0, 1000] {
+				mut output_file := 'results/${model_name}_${collection_type}_${nshot}shot_${mask}mask.json'
 
-			cmd := [
-				'python3 run_experiment.py',
-				'--collection $collection_type',
-				'--model $model_name',
-				'--random_state 42',
-				'--sample 50',
-				'--mask_columns $mask',
-				'--nshot $nshot', 
-				'-o $output_file',
-				].join(' ')
+				if mask_literals {
+					output_file = 'results/${model_name}_${collection_type}_${nshot}shot_${mask}mask_no-literals.json'
+				}
 
-			// don't do zero-shot multiple times
-			if (nshot == 0 && collection_type == 'random') || (nshot > 0) {
-				sh(cmd)
+				mut cmd := [
+					'python3 run_experiment.py',
+					'--collection $collection_type',
+					'--model $model_name',
+					'--random_state 42',
+					// '--sample 100',
+					'--mask_columns $mask',
+					'--nshot $nshot',
+					'-o $output_file',
+					].join(' ')
+
+				if mask_literals {
+					cmd += ' --mask-literals'
+				}
+
+				// don't do zero-shot multiple times
+				if (nshot == 0 && collection_type == 'random') || (nshot > 0) {
+					sh(cmd)
+				}
 			}
 		}
 	}
 }
+ 

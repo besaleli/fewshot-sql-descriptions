@@ -28,6 +28,7 @@ parser.add_argument('--random_state', type=int, default=42, help='Random state f
 parser.add_argument('--nshot', '-n', type=int, default=3, help='Number of examples to use for fewshot generation')
 parser.add_argument('--mask_columns', type=int, default=0, help='Number of columns to mask in query (default: 0, do not mask any columns)')
 parser.add_argument('--output_file', '-o', type=str, required=True, help='Output file to save generated descriptions to')
+parser.add_argument('--mask-literals', action='store_true', help='Mask literals in SQL queries.')
 
 args = parser.parse_args()
 
@@ -47,12 +48,14 @@ if args.sample:
 # instantiate collection
 collection: Collection = get_collection_method(args.collection)(train)
 
+print('loading inputs...')
 # load eval inputs
 eval_inputs = load_training_inputs(
     dataset=df,
     collection=collection,
     n=args.nshot,
-    mask_columns=args.mask_columns
+    mask_columns=args.mask_columns,
+    mask_literals=args.mask_literals
     )
 
 # load description generator
