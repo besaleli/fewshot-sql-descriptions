@@ -34,6 +34,9 @@ for filename in glob.glob('results/*.json'):
     
 df = pd.DataFrame(df)
 
+# strip generations because deBERTa's tokenizer is an asshole lol
+df['generation'] = df['generation'].apply(lambda i: re.sub(r'\s+', ' ', i).strip())
+
 print('total data points: ', len(df))
 
 print('getting scores...')
