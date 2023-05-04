@@ -15,7 +15,7 @@ model_name := 'text-curie-001'
 
 for collection_type in collection_types {
 	for nshot in 0 .. 4 { 
-		for mask_literals in [false] {
+		for mask_literals in [true, false] {
 			for mask in [0, 1000] {
 				mut output_file := 'results/${model_name}_${collection_type}_${nshot}shot_${mask}mask.json'
 
