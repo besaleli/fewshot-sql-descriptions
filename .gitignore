@@ -1,10 +1,12 @@
-# OpenAI
+# API keys
 .openai_api_key
+.wandb_api_key
 
 # Results
 results/
 results_old/
 data.json
+wandb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
